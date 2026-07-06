@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Eye, EyeOff, Sparkles, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Wallet } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -74,16 +74,12 @@ function LoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-12">
-      {/* Background gradients */}
-      <div className="absolute -left-1/4 -top-1/4 h-[800px] w-[800px] rounded-full bg-primary/10 blur-[120px]" />
-      <div className="absolute -bottom-1/4 -right-1/4 h-[800px] w-[800px] rounded-full bg-success/10 blur-[120px]" />
-
-      <div className="relative w-full max-w-md">
-        <div className="card-elevated flex flex-col gap-6 p-8 backdrop-blur-sm bg-card/90">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      <div className="w-full max-w-md">
+        <div className="card-elevated flex flex-col gap-6 p-6 sm:p-8">
           <div className="flex flex-col items-center gap-2 text-center">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl gradient-primary text-primary-foreground shadow-lg">
-              <Sparkles className="h-6 w-6" />
+            <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary text-primary-foreground">
+              <Wallet className="h-6 w-6" />
             </div>
             <h1 className="mt-4 font-display text-2xl font-bold tracking-tight">
               {isLogin ? "Bienvenido de nuevo" : "Crea tu cuenta"}

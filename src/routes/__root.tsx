@@ -6,24 +6,21 @@ import {
   useRouter,
   HeadContent,
   Scripts,
-  useLocation,
-  useNavigate,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
-import { supabase } from "@/lib/supabase";
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Página no encontrada</h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Pagina no encontrada</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          La página que buscas no existe o fue movida.
+          La pagina que buscas no existe o fue movida.
         </p>
         <div className="mt-6">
           <Link
@@ -49,10 +46,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          Ocurrió un problema
+          Ocurrio un problema
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          No pudimos cargar esta página. Intenta nuevamente o vuelve al inicio.
+          No pudimos cargar esta pagina. Intenta nuevamente o vuelve al inicio.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -85,13 +82,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Aplicación de finanzas personales para gestionar tus ingresos, gastos, presupuestos y metas de ahorro.",
+          "Aplicacion de finanzas personales para gestionar tus ingresos, gastos, presupuestos y metas de ahorro.",
       },
       { property: "og:title", content: "Control de Gastos Diarios" },
       {
         property: "og:description",
         content:
-          "Panel moderno y elegante para tomar el control de tu dinero día a día.",
+          "Panel moderno para tomar el control de tu dinero dia a dia.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -129,47 +126,6 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [sessionChecked, setSessionChecked] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!active) return;
-      setSessionChecked(true);
-      if (!session && location.pathname !== "/login") {
-        navigate({ to: "/login" });
-      }
-    });
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!active) return;
-      setSessionChecked(true);
-      if (!session && location.pathname !== "/login") {
-        navigate({ to: "/login" });
-      }
-    });
-
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
-  }, [navigate, location.pathname]);
-
-  if (!sessionChecked && location.pathname !== "/login") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground">Verificando sesión...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <QueryClientProvider client={queryClient}>

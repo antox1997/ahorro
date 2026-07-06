@@ -9,6 +9,16 @@ import type {
   SavingsGoal,
   Transaction,
 } from "@/models";
+import {
+  accounts as mockAccounts,
+  budgets as mockBudgets,
+  categories as mockCategories,
+  insights as mockInsights,
+  notifications as mockNotifications,
+  recurringTransactions as mockRecurringTransactions,
+  savingsGoals as mockSavingsGoals,
+  transactions as mockTransactions,
+} from "@/services/mockData";
 
 // =====================================================================
 // UTILITIES FOR MAPPING DATABASE (snake_case) TO FRONTEND (camelCase)
@@ -90,6 +100,11 @@ const mapNotification = (db: any): NotificationItem => ({
 // API SERVICE IMPLEMENTATIONS (Supabase client integration)
 // =====================================================================
 
+const getSessionUserId = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.user?.id ?? null;
+};
+
 // Helper to get authenticated user ID
 const getUserId = async () => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -99,12 +114,18 @@ const getUserId = async () => {
 
 // --- ACCOUNTS ---
 export const getAccounts = async (): Promise<Account[]> => {
-  const { data, error } = await supabase
-    .from("accounts")
-    .select("*")
-    .order("name", { ascending: true });
-  if (error) throw error;
-  return (data || []).map(mapAccount);
+  try {
+    if (!(await getSessionUserId())) return mockAccounts;
+    const { data, error } = await supabase
+      .from("accounts")
+      .select("*")
+      .order("name", { ascending: true });
+    if (error) throw error;
+    return (data || []).map(mapAccount);
+  } catch (error) {
+    console.warn("Using demo accounts because Supabase did not respond:", error);
+    return mockAccounts;
+  }
 };
 
 export const createAccount = async (acc: Omit<Account, "id" | "balance">): Promise<Account> => {
@@ -133,12 +154,18 @@ export const deleteAccount = async (id: string): Promise<void> => {
 
 // --- CATEGORIES ---
 export const getCategories = async (): Promise<Category[]> => {
-  const { data, error } = await supabase
-    .from("categories")
-    .select("*")
-    .order("name", { ascending: true });
-  if (error) throw error;
-  return (data || []).map(mapCategory);
+  try {
+    if (!(await getSessionUserId())) return mockCategories;
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .order("name", { ascending: true });
+    if (error) throw error;
+    return (data || []).map(mapCategory);
+  } catch (error) {
+    console.warn("Using demo categories because Supabase did not respond:", error);
+    return mockCategories;
+  }
 };
 
 export const createCategory = async (cat: Omit<Category, "id">): Promise<Category> => {
@@ -166,12 +193,18 @@ export const deleteCategory = async (id: string): Promise<void> => {
 
 // --- TRANSACTIONS ---
 export const getTransactions = async (): Promise<Transaction[]> => {
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*")
-    .order("date", { ascending: false });
-  if (error) throw error;
-  return (data || []).map(mapTransaction);
+  try {
+    if (!(await getSessionUserId())) return mockTransactions;
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*")
+      .order("date", { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapTransaction);
+  } catch (error) {
+    console.warn("Using demo transactions because Supabase did not respond:", error);
+    return mockTransactions;
+  }
 };
 
 export const createTransaction = async (tx: Omit<Transaction, "id" | "status">): Promise<Transaction> => {
@@ -250,30 +283,36 @@ export const deleteTransaction = async (id: string): Promise<void> => {
 
 // --- BUDGETS ---
 export const getBudgets = async (): Promise<Budget[]> => {
-  const { data, error } = await supabase
-    .from("budgets")
-    .select("*")
-    .order("month", { ascending: false });
-  if (error) throw error;
+  try {
+    if (!(await getSessionUserId())) return mockBudgets;
+    const { data, error } = await supabase
+      .from("budgets")
+      .select("*")
+      .order("month", { ascending: false });
+    if (error) throw error;
 
-  // We should fetch transactions of the category for the month to calculate "spent"
-  const budgetsList = (data || []).map(mapBudget);
+    // We should fetch transactions of the category for the month to calculate "spent"
+    const budgetsList = (data || []).map(mapBudget);
   
-  // Calculate spent dynamically for each budget
-  const txList = await getTransactions();
-  const budgetsWithSpent = budgetsList.map((b) => {
-    const spent = txList
-      .filter((t) => {
-        const matchesCat = t.categoryId === b.categoryId;
-        const matchesMonth = t.date.slice(0, 7) === b.month;
-        const isExpense = t.type === "expense";
-        return matchesCat && matchesMonth && isExpense;
-      })
-      .reduce((s, t) => s + t.amount, 0);
-    return { ...b, spent };
-  });
+    // Calculate spent dynamically for each budget
+    const txList = await getTransactions();
+    const budgetsWithSpent = budgetsList.map((b) => {
+      const spent = txList
+        .filter((t) => {
+          const matchesCat = t.categoryId === b.categoryId;
+          const matchesMonth = t.date.slice(0, 7) === b.month;
+          const isExpense = t.type === "expense";
+          return matchesCat && matchesMonth && isExpense;
+        })
+        .reduce((s, t) => s + t.amount, 0);
+      return { ...b, spent };
+    });
 
-  return budgetsWithSpent;
+    return budgetsWithSpent;
+  } catch (error) {
+    console.warn("Using demo budgets because Supabase did not respond:", error);
+    return mockBudgets;
+  }
 };
 
 export const createBudget = async (b: Omit<Budget, "id" | "spent">): Promise<Budget> => {
@@ -299,12 +338,18 @@ export const deleteBudget = async (id: string): Promise<void> => {
 
 // --- SAVINGS GOALS ---
 export const getSavingsGoals = async (): Promise<SavingsGoal[]> => {
-  const { data, error } = await supabase
-    .from("savings_goals")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data || []).map(mapSavingsGoal);
+  try {
+    if (!(await getSessionUserId())) return mockSavingsGoals;
+    const { data, error } = await supabase
+      .from("savings_goals")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapSavingsGoal);
+  } catch (error) {
+    console.warn("Using demo savings goals because Supabase did not respond:", error);
+    return mockSavingsGoals;
+  }
 };
 
 export const createSavingsGoal = async (g: Omit<SavingsGoal, "id" | "currentAmount">): Promise<SavingsGoal> => {
@@ -345,12 +390,18 @@ export const deleteSavingsGoal = async (id: string): Promise<void> => {
 
 // --- RECURRING TRANSACTIONS ---
 export const getRecurring = async (): Promise<RecurringTransaction[]> => {
-  const { data, error } = await supabase
-    .from("recurring_transactions")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data || []).map(mapRecurring);
+  try {
+    if (!(await getSessionUserId())) return mockRecurringTransactions;
+    const { data, error } = await supabase
+      .from("recurring_transactions")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapRecurring);
+  } catch (error) {
+    console.warn("Using demo recurring transactions because Supabase did not respond:", error);
+    return mockRecurringTransactions;
+  }
 };
 
 export const createRecurring = async (
@@ -391,16 +442,24 @@ export const deleteRecurring = async (id: string): Promise<void> => {
 
 // --- NOTIFICATIONS ---
 export const getNotifications = async (): Promise<NotificationItem[]> => {
-  const { data, error } = await supabase
-    .from("notifications")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data || []).map(mapNotification);
+  try {
+    if (!(await getSessionUserId())) return mockNotifications;
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapNotification);
+  } catch (error) {
+    console.warn("Using demo notifications because Supabase did not respond:", error);
+    return mockNotifications;
+  }
 };
 
 // --- FINANCIAL INSIGHTS ---
 export const getInsights = async (): Promise<FinancialInsight[]> => {
+  if (!(await getSessionUserId())) return mockInsights;
+
   // We can calculate dynamic insights from the database details
   // Or fetch them from mock/generated values for the dashboard
   const tx = await getTransactions();
